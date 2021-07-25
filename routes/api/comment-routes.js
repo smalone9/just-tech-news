@@ -3,16 +3,8 @@ const { Comment } = require('../../models');
 
 router.get('/', (req, res) => {
     console.log('======================');
-    Comment.findAll({
-      // Query configuration
-      include: [
-        {
-          model: User,
-          key: id
-        }
-      ]
-    })
-    .then(dbPostData => res.json(dbPostData))
+    Comment.findAll()
+    .then(dbCommentData => res.json(dbCommentData))
     .catch(err => {
       console.log(err);
       res.status(500).json(err);
