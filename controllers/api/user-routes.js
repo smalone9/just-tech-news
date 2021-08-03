@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const { User, Post, Comment, Vote } = require("../../models");
-const withAuth = require("../utils/auth");
 
 // GET /api/users
 router.get("/", (req, res) => {
@@ -15,7 +14,7 @@ router.get("/", (req, res) => {
 });
 
 // GET /api/users/1
-router.get("/:id", withAuth, (req, res) => {
+router.get("/:id", (req, res) => {
   User.findOne({
     attributes: { exclude: ["password"] },
     where: {
@@ -63,15 +62,20 @@ router.post("/", (req, res) => {
     username: req.body.username,
     email: req.body.email,
     password: req.body.password,
-  }).then((dbUserData) => {
-    req.session.save(() => {
-      req.session.user_id = dbUserData.id;
-      req.session.username = dbUserData.username;
-      req.session.loggedIn = true;
+  })
+    .then((dbUserData) => {
+      req.session.save(() => {
+        req.session.user_id = dbUserData.id;
+        req.session.username = dbUserData.username;
+        req.session.loggedIn = true;
 
-      res.json(dbUserData);
+        res.json(dbUserData);
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json(err);
     });
-  });
 });
 
 router.post("/login", (req, res) => {
@@ -103,6 +107,16 @@ router.post("/login", (req, res) => {
   });
 });
 
+router.post("/logout", (req, res) => {
+  if (req.session.loggedIn) {
+    req.session.destroy(() => {
+      res.status(204).end();
+    });
+  } else {
+    res.status(404).end();
+  }
+});
+
 // PUT /api/users/1
 router.put("/:id", (req, res) => {
   // expects {username: 'Lernantino', email: 'lernantino@gmail.com', password: 'password1234'}
@@ -128,7 +142,7 @@ router.put("/:id", (req, res) => {
 });
 
 // DELETE /api/users/1
-router.delete("/:id", withAuth, (req, res) => {
+router.delete("/:id", (req, res) => {
   User.destroy({
     where: {
       id: req.params.id,
@@ -147,19 +161,4 @@ router.delete("/:id", withAuth, (req, res) => {
     });
 });
 
-router.post("/logout", (req, res) => {
-  if (req.session.loggedIn) {
-    req.session.destroy(() => {
-      res.status(204).end();
-    });
-  } else {
-    res.status(404).end();
-  }
-  <nav>
-    <button id="logout" class="btn-no-style">
-      logout
-    </button>
-    <a href="/login">login</a>
-  </nav>;
-});
 module.exports = router;
