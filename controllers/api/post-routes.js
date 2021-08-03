@@ -7,7 +7,18 @@ router.get("/", (req, res) => {
   console.log("======================");
   Post.findAll({
     // Query configuration
-    attributes: ["id", "post_url", "title", "created_at", [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']],
+    attributes: [
+      "id",
+      "post_url",
+      "title",
+      "created_at",
+      [
+        sequelize.literal(
+          "(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)"
+        ),
+        "vote_count",
+      ],
+    ],
     order: [["created_at", "DESC"]],
     include: [
       // include the Comment model here:
@@ -82,7 +93,7 @@ router.post("/", (req, res) => {
   Post.create({
     title: req.body.title,
     post_url: req.body.post_url,
-    user_id: req.body.user_id,
+    user_id: req.session.user_id,
   })
     .then((dbPostData) => res.json(dbPostData))
     .catch((err) => {
@@ -91,13 +102,16 @@ router.post("/", (req, res) => {
     });
 });
 
-router.put('/upvote', (req, res) => {
+router.put("/upvote", (req, res) => {
   // make sure the session exists first
   if (req.session) {
     // pass session id along with all destructured properties on req.body
-    Post.upvote({ ...req.body, user_id: req.session.user_id }, { Vote, Comment, User })
-      .then(updatedVoteData => res.json(updatedVoteData))
-      .catch(err => {
+    Post.upvote(
+      { ...req.body, user_id: req.session.user_id },
+      { Vote, Comment, User }
+    )
+      .then((updatedVoteData) => res.json(updatedVoteData))
+      .catch((err) => {
         console.log(err);
         res.status(500).json(err);
       });
